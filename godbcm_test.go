@@ -3,6 +3,7 @@ package godbcm_test
 import (
 	"log"
 	"testing"
+	"time"
 
 	"github.com/cliffom/godbcm"
 	"github.com/google/uuid"
@@ -33,6 +34,34 @@ func TestGetConnection(t *testing.T) {
 
 	if _, err := mgr.GetConnection(); err == nil {
 		log.Fatalf("expected error but got none")
+	}
+}
+
+func TestWaitForConnection(t *testing.T) {
+	delay := 1 * time.Second
+
+	// Create the initial connection
+	mgr := godbcm.New(1)
+	connection, _ := mgr.GetConnection()
+
+	// Setup a routine to release the initial connection
+	// after the delay. Doing this will allow the polling
+	// mechanism after this routine to execute
+	go func(mgr *godbcm.ConnectionManager, connID uuid.UUID, delay time.Duration) {
+		time.Sleep(delay)
+		mgr.ReleaseConnection(connID)
+	}(mgr, connection.ID, delay)
+
+	// Poll for a new connection, waiting for the initial connection
+	// to be released
+	if _, err := mgr.WaitForConnection(delay); err != nil {
+		log.Fatalf("could not get a connection")
+	}
+
+	// Try to get a new connection without releasing the
+	// previous connection
+	if _, err := mgr.WaitForConnection(delay); err == nil {
+		log.Fatalf("expected an error getting a connection")
 	}
 }
 
