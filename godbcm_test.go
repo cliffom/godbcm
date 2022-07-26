@@ -23,6 +23,7 @@ func TestGetConnection(t *testing.T) {
 	connections := make(map[int]*godbcm.Connection)
 	mgr := godbcm.New(limit)
 
+	// Get all the connections in the pool
 	for i := 0; i < limit; i++ {
 		var err error
 		connections[i], err = mgr.GetConnection()
@@ -32,6 +33,7 @@ func TestGetConnection(t *testing.T) {
 		}
 	}
 
+	// Attempt to get a new connection when the pool is empty
 	if _, err := mgr.GetConnection(); err == nil {
 		log.Fatalf("expected error but got none")
 	}
@@ -68,16 +70,16 @@ func TestWaitForConnection(t *testing.T) {
 func TestReleaseConnection(t *testing.T) {
 	mgr := godbcm.New(1)
 
+	// Get a connection and release it immediately
 	connection, _ := mgr.GetConnection()
 	mgr.ReleaseConnection(connection.ID)
 
+	// Get a new connection
 	if _, err := mgr.GetConnection(); err != nil {
 		log.Fatalf("could not get new connection: %v", err)
 	}
-}
 
-func TestReleaseInvalidConnection(t *testing.T) {
-	mgr := godbcm.New(1)
+	// Attempt to release non-existant connection
 	if err := mgr.ReleaseConnection(uuid.New()); err == nil {
 		log.Fatalf("expected error but got none")
 	}
