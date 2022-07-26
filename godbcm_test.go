@@ -38,19 +38,19 @@ func TestGetConnection(t *testing.T) {
 }
 
 func TestWaitForConnection(t *testing.T) {
-	delay := 1 * time.Second
+	delay := 500 * time.Millisecond
 
 	// Create the initial connection
 	mgr := godbcm.New(1)
 	connection, _ := mgr.GetConnection()
 
 	// Setup a routine to release the initial connection
-	// after the delay. Doing this will allow the polling
-	// mechanism after this routine to execute
+	// after the delay (delay/2). Doing this will allow the polling
+	// mechanism defined after this routine to execute
 	go func(mgr *godbcm.ConnectionManager, connID uuid.UUID, delay time.Duration) {
 		time.Sleep(delay)
 		mgr.ReleaseConnection(connID)
-	}(mgr, connection.ID, delay)
+	}(mgr, connection.ID, delay/2)
 
 	// Poll for a new connection, waiting for the initial connection
 	// to be released
